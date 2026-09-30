@@ -1,4 +1,5 @@
 plugins {
+id("com.google.devtools.ksp") version "1.9.24-1.0.20"
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
@@ -40,6 +41,8 @@ android {
 }
 
 dependencies {
+implementation("androidx.room:room-runtime:2.6.1")
+implementation("androidx.room:room-ktx:2.6.1")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.activity:activity-compose:1.9.1")
@@ -48,4 +51,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+}
+dependencies {
+    add("ksp", "androidx.room:room-compiler:2.6.1")
 }
