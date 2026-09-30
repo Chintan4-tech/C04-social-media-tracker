@@ -12,17 +12,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            IdeasITheme {
-                SplashScreen()
-            }
+    IdeasITheme {
+        var showSplash by remember { mutableStateOf(true) }
+
+        LaunchedEffect(Unit) {
+            kotlinx.coroutines.delay(1000)
+            showSplash = false
+        }
+
+        if (showSplash) {
+            SplashScreen()
+        } else {
+            SelectAppsScreen()
+        }
+    }
         }
     }
 }
+            
+        
+        
+    
+
 
 @Composable
 fun IdeasITheme(content: @Composable () -> Unit) {
