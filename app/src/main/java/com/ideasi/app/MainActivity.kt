@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
             "splash" -> SplashScreen()
             "selectApps" -> SelectAppsScreen(onNext = { currentScreen = "setTime" })
             "setTime" -> SetTimeScreen(onDone = { currentScreen = "dashboard" })
-            "dashboard" -> Text("Dashboard coming in the next stage")
+            "dashboard" -> DashboardScreen(onAddApps = { currentScreen = "selectApps" })
         }
     }
         }
