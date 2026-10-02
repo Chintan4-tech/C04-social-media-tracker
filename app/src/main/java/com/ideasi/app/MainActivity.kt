@@ -33,7 +33,8 @@ class MainActivity : ComponentActivity() {
         when (currentScreen) {
             "splash" -> SplashScreen()
             "selectApps" -> SelectAppsScreen(onNext = { currentScreen = "setTime" })
-            "setTime" -> SetTimeScreen(onDone = { currentScreen = "dashboard" })
+            "setTime" -> SetTimeScreen(onDone = { currentScreen = "permission" })
+"permission" -> PermissionScreen(onPermissionGranted = { currentScreen = "dashboard" })
             "dashboard" -> DashboardScreen(onAddApps = { currentScreen = "selectApps" })
         }
     }
