@@ -23,17 +23,18 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
     IdeasITheme {
-        var showSplash by remember { mutableStateOf(true) }
+        var currentScreen by remember { mutableStateOf("splash") }
 
         LaunchedEffect(Unit) {
             kotlinx.coroutines.delay(1000)
-            showSplash = false
+            currentScreen = "selectApps"
         }
 
-        if (showSplash) {
-            SplashScreen()
-        } else {
-            SelectAppsScreen()
+        when (currentScreen) {
+            "splash" -> SplashScreen()
+            "selectApps" -> SelectAppsScreen(onNext = { currentScreen = "setTime" })
+            "setTime" -> SetTimeScreen(onDone = { currentScreen = "dashboard" })
+            "dashboard" -> Text("Dashboard coming in the next stage")
         }
     }
         }
