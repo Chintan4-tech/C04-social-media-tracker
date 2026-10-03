@@ -30,7 +30,7 @@ fun DashboardScreen(onAddApps: () -> Unit) {
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(savedApps) { app ->
                     // Placeholder until Stage 5 adds real usage tracking
-                    val usedMinutes = 0
+                    val usedMinutes = getTodayUsageMinutes(context, app.packageName)
                     val remainingMinutes = app.limitMinutes - usedMinutes
 
                     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
