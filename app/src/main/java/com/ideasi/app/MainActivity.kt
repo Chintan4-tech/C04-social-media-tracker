@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import android.content.Intent
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,7 +35,11 @@ class MainActivity : ComponentActivity() {
             "splash" -> SplashScreen()
             "selectApps" -> SelectAppsScreen(onNext = { currentScreen = "setTime" })
             "setTime" -> SetTimeScreen(onDone = { currentScreen = "permission" })
-"permission" -> PermissionScreen(onPermissionGranted = { currentScreen = "dashboard" })
+"permission" -> PermissionScreen(onPermissionGranted = {
+    val serviceIntent = Intent(this@MainActivity, LimitCheckService::class.java)
+    startForegroundService(serviceIntent)
+    currentScreen = "dashboard"
+})
             "dashboard" -> DashboardScreen(onAddApps = { currentScreen = "selectApps" })
         }
     }
