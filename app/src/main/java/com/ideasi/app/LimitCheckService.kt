@@ -1,74 +1,67 @@
 package com.ideasi.app
 
-import android.app.*
-import android.content.Context
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
 import android.content.Intent
-import android.os.Build
 import android.os.IBinder
-import kotlinx.coroutines.*
 
 class LimitCheckService : Service() {
 
-    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    companion object {
+        private const val CHANNEL_ID = "ideas_i_monitoring"
+        private const val NOTIFICATION_ID = 1001
+    }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    override fun onCreate() {
+        super.onCreate()
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(1, buildNotification("Monitoring app usage..."))
+        createNotificationChannel()
 
-        serviceScope.launch {
-            while (true) {
-                val results = checkAllLimits(applicationContext)
-                val overLimitApps = results.filter { it.isOverLimit }
+        val notification = createNotification()
 
-                if (overLimitApps.isNotEmpty()) {
-                    val names = overLimitApps.joinToString(", ") { it.app.appName }
-                    showAlertNotification("Time limit reached: $names")
-                }
+        startForeground(
+            NOTIFICATION_ID,
+            notification
+        )
+    }
 
-                delay(30_000) // wait 30 seconds before checking again
-            }
-        }
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int
+    ): Int {
+
+        // Stage 2 only starts the monitoring service.
+        // Usage checking will be added in a later stage.
 
         return START_STICKY
     }
 
-    private fun buildNotification(text: String): Notification {
-        val channelId = "ideas_i_tracking"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId, "Ideas I Tracking", NotificationManager.IMPORTANCE_LOW
-            )
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(channel)
-        }
-        return Notification.Builder(this, channelId)
+    private fun createNotificationChannel() {
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Ideas I Monitoring",
+            NotificationManager.IMPORTANCE_LOW
+        )
+
+        val notificationManager =
+            getSystemService(NotificationManager::class.java)
+
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    private fun createNotification(): Notification {
+        return Notification.Builder(this, CHANNEL_ID)
             .setContentTitle("Ideas I")
-            .setContentText(text)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentText("Monitoring app usage")
+            .setSmallIcon(android.R.drawable.ic_menu_recent_history)
+            .setOngoing(true)
             .build()
     }
 
-    private fun showAlertNotification(text: String) {
-        val channelId = "ideas_i_alerts"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId, "Ideas I Alerts", NotificationManager.IMPORTANCE_HIGH
-            )
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(channel)
-        }
-        val notification = Notification.Builder(this, channelId)
-            .setContentTitle("Time limit reached!")
-            .setContentText(text)
-            .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .build()
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(2, notification)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        serviceScope.cancel()
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
     }
 }
