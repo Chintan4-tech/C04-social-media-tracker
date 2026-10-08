@@ -1,143 +1,115 @@
 package com.ideasi.app
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.sp
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
-@Composable
-fun SetTimeScreen(onDone: () -> Unit) {
-    val context = LocalContext.current
-    val db = remember { AppDatabase.getDatabase(context) }
-    val scope = rememberCoroutineScope()
+class MainActivity : ComponentActivity() {
 
-    val savedApps by db.selectedAppDao().getAllSelectedApps()
-        .collectAsState(initial = emptyList())
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    val textValues = remember { mutableStateMapOf<String, String>() }
+        setContent {
+            IdeasITheme {
 
-    var difficulty by remember {
-        mutableStateOf(getChallengeDifficulty(context))
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        Text(
-            text = "Set time limits",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
-        LazyColumn(
-            modifier = Modifier.weight(1f)
-        ) {
-            items(savedApps) { app ->
-
-                val currentText =
-                    textValues[app.packageName]
-                        ?: app.limitMinutes.toString()
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                ) {
-
-                    Text(
-                        text = app.appName,
-                        modifier = Modifier
-                            .weight(1f)
-                            .align(Alignment.CenterVertically)
-                    )
-
-                    OutlinedTextField(
-                        value = currentText,
-                        onValueChange = {
-                            textValues[app.packageName] = it
-                        },
-                        label = {
-                            Text("minutes")
-                        },
-                        modifier = Modifier.width(100.dp)
-                    )
+                var currentScreen by remember {
+                    mutableStateOf("splash")
                 }
-            }
 
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
+                LaunchedEffect(Unit) {
+                    kotlinx.coroutines.delay(1000)
+                    currentScreen = "selectApps"
+                }
 
-                Text(
-                    text = "Math difficulty",
-                    style = MaterialTheme.typography.titleMedium
-                )
+                when (currentScreen) {
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                    "splash" -> SplashScreen()
 
-                    MathDifficulty.entries.forEach { level ->
+                    "selectApps" -> SelectAppsScreen(
+                        onNext = {
+                            currentScreen = "setTime"
+                        }
+                    )
 
-                        FilterChip(
-                            selected = difficulty == level,
-                            onClick = {
-                                difficulty = level
-                            },
-                            label = {
-                                Text(
-                                    level.name.lowercase()
-                                        .replaceFirstChar { it.uppercase() }
-                                )
-                            }
-                        )
-                    }
+                    "setTime" -> SetTimeScreen(
+                        onDone = {
+                            currentScreen = "permission"
+                        }
+                    )
+
+                    "permission" -> PermissionScreen(
+                        onPermissionGranted = {
+                            scheduleUsageMonitoring()
+                            currentScreen = "dashboard"
+                        }
+                    )
+
+                    "dashboard" -> DashboardScreen(
+                        onAddApps = {
+                            currentScreen = "selectApps"
+                        }
+                    )
                 }
             }
         }
+    }
 
-        Button(
-            onClick = {
-                scope.launch {
+    private fun scheduleUsageMonitoring() {
 
-                    savedApps.forEach { app ->
+        val request =
+            PeriodicWorkRequestBuilder<UsageLimitWorker>(
+                15,
+                TimeUnit.MINUTES
+            ).build()
 
-                        val minutes =
-                            textValues[app.packageName]
-                                ?.toIntOrNull()
-                                ?: app.limitMinutes
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "IdeasI_UsageMonitoring",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            request
+        )
+    }
+}
 
-                        db.selectedAppDao().insertApp(
-                            app.copy(
-                                limitMinutes = minutes
-                            )
-                        )
-                    }
+@Composable
+fun IdeasITheme(
+    content: @Composable () -> Unit
+) {
+    MaterialTheme {
+        content()
+    }
+}
 
-                    saveChallengeDifficulty(
-                        context,
-                        difficulty
-                    )
-
-                    onDone()
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
+@Composable
+fun SplashScreen() {
+    Surface(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Text("Save")
+            Text(
+                text = "IDEAS I",
+                fontSize = 32.sp
+            )
         }
     }
 }
