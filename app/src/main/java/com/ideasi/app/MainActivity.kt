@@ -1,22 +1,12 @@
+
 package com.ideasi.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.*
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -24,23 +14,37 @@ import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
 
+    private var challengeRequested by mutableStateOf(false)
+    private var blockedPackage: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        handleChallengeIntent(intent)
+
         setContent {
             IdeasITheme {
-
                 var currentScreen by remember {
-                    mutableStateOf("splash")
+                    mutableStateOf(
+                        if (challengeRequested) "challenge"
+                        else "splash"
+                    )
+                }
+
+                LaunchedEffect(challengeRequested) {
+                    if (challengeRequested) {
+                        currentScreen = "challenge"
+                    }
                 }
 
                 LaunchedEffect(Unit) {
                     kotlinx.coroutines.delay(1000)
-                    currentScreen = "selectApps"
+                    if (!challengeRequested) {
+                        currentScreen = "selectApps"
+                    }
                 }
 
                 when (currentScreen) {
-
                     "splash" -> SplashScreen()
 
                     "selectApps" -> SelectAppsScreen(
@@ -67,13 +71,58 @@ class MainActivity : ComponentActivity() {
                             currentScreen = "selectApps"
                         }
                     )
+
+                    "challenge" -> MathChallengeScreen(
+                        difficulty = getChallengeDifficulty(
+                            this@MainActivity
+                        ),
+                        onCorrectAnswer = {
+                            val targetPackage = blockedPackage
+
+                            if (!targetPackage.isNullOrBlank()) {
+                                setAppOverLimit(
+                                    this@MainActivity,
+                                    targetPackage,
+                                    false
+                                )
+                            }
+
+                            challengeRequested = false
+                            blockedPackage = null
+                            currentScreen = "dashboard"
+
+                            if (!targetPackage.isNullOrBlank()) {
+                                packageManager
+                                    .getLaunchIntentForPackage(targetPackage)
+                                    ?.let { targetIntent ->
+                                        startActivity(targetIntent)
+                                    }
+                            }
+                        }
+                    )
                 }
             }
         }
     }
 
-    private fun scheduleUsageMonitoring() {
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleChallengeIntent(intent)
+    }
 
+    private fun handleChallengeIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(
+                "show_math_challenge",
+                false
+            ) == true
+        ) {
+            blockedPackage = intent.getStringExtra("blocked_package")
+            challengeRequested = true
+        }
+    }
+
+    private fun scheduleUsageMonitoring() {
         val request =
             PeriodicWorkRequestBuilder<UsageLimitWorker>(
                 15,
@@ -89,9 +138,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun IdeasITheme(
-    content: @Composable () -> Unit
-) {
+fun IdeasITheme(content: @Composable () -> Unit) {
     MaterialTheme {
         content()
     }
@@ -99,17 +146,18 @@ fun IdeasITheme(
 
 @Composable
 fun SplashScreen() {
-    Surface(
-        modifier = Modifier.fillMaxSize()
+    androidx.compose.material3.Surface(
+        modifier = androidx.compose.ui.Modifier.fillMaxSize()
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+        androidx.compose.foundation.layout.Box(
+            modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+            contentAlignment = androidx.compose.ui.Alignment.Center
         ) {
-            Text(
+            androidx.compose.material3.Text(
                 text = "IDEAS I",
-                fontSize = 32.sp
+                fontSize = androidx.compose.ui.unit.sp(32)
             )
         }
     }
 }
+
