@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+
 import androidx.compose.ui.unit.sp
 
 
@@ -161,7 +162,8 @@ fun SplashScreen() {
         ) {
             androidx.compose.material3.Text(
                 text = "IDEAS I",
-                fontSize = androidx.compose.ui.unit.sp(32)
+                fontSize = 32.sp
+            
             )
         }
     }
