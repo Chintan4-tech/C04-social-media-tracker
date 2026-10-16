@@ -19,17 +19,20 @@ fun SelectAppsScreen(onNext: () -> Unit) {
 
     val apps = remember { getInstalledApps(context) }
 
-    // Load currently saved selections from the database
-    val savedApps by db.selectedAppDao().getAllSelectedApps()
+    val savedApps by db.selectedAppDao()
+        .getAllSelectedApps()
         .collectAsState(initial = emptyList())
 
-    val selectedPackageNames = savedApps.map { it.packageName }.toSet()
+    val selectedPackages = savedApps.map { it.packageName }.toSet()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         Text(
             text = "Select apps to track",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(bottom = 12.dp)
+            style = MaterialTheme.typography.titleLarge
         )
 
         LazyColumn(modifier = Modifier.weight(1f)) {
@@ -41,7 +44,7 @@ fun SelectAppsScreen(onNext: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
-                        checked = selectedPackageNames.contains(app.packageName),
+                        checked = selectedPackages.contains(app.packageName),
                         onCheckedChange = { checked ->
                             scope.launch {
                                 if (checked) {
@@ -53,11 +56,13 @@ fun SelectAppsScreen(onNext: () -> Unit) {
                                         )
                                     )
                                 } else {
-                                    db.selectedAppDao().deleteApp(app.packageName)
+                                    db.selectedAppDao()
+                                        .deleteApp(app.packageName)
                                 }
                             }
                         }
                     )
+
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(text = app.appName)
                 }
@@ -66,7 +71,9 @@ fun SelectAppsScreen(onNext: () -> Unit) {
 
         Button(
             onClick = onNext,
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp)
         ) {
             Text("Next")
         }
