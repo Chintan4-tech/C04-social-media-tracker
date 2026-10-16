@@ -7,35 +7,26 @@ import android.view.accessibility.AccessibilityEvent
 class AppAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-
         if (event?.eventType !=
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
-        ) {
-            return
-        }
+        ) return
 
-        val packageName = event.packageName?.toString()
+        val targetPackage = event.packageName?.toString()
             ?: return
 
-        if (packageName == this.packageName) {
-            return
-        }
+        if (targetPackage == packageName) return
 
-        if (!isAppOverLimit(this, packageName)) {
-            return
-        }
+        if (!isAppOverLimit(this, targetPackage)) return
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("show_math_challenge", true)
-            putExtra("blocked_package", packageName)
+            putExtra("blocked_package", targetPackage)
         }
 
         startActivity(intent)
     }
 
-    override fun onInterrupt() {
-        // Accessibility service interrupted.
-    }
+    override fun onInterrupt() = Unit
 }
