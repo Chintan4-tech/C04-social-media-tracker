@@ -29,3 +29,25 @@ fun isAppOverLimit(
     )
         .getBoolean(packageName, false)
 }
+fun setChallengePassedAtUsage(
+    context: Context,
+    packageName: String,
+    usedMinutes: Int
+) {
+    context.getSharedPreferences(
+        "ideas_i_limits",
+        Context.MODE_PRIVATE
+    ).edit()
+        .putInt("passed_usage_$packageName", usedMinutes)
+        .apply()
+}
+
+fun getChallengePassedUsageMinutes(
+    context: Context,
+    packageName: String
+): Int {
+    return context.getSharedPreferences(
+        "ideas_i_limits",
+        Context.MODE_PRIVATE
+    ).getInt("passed_usage_$packageName", -1)
+}
