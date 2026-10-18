@@ -1,4 +1,3 @@
-
 package com.ideasi.app
 
 import android.accessibilityservice.AccessibilityService
@@ -6,10 +5,15 @@ import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class AppAccessibilityService : AccessibilityService() {
+
+    private val serviceScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.eventType !=
@@ -21,9 +25,12 @@ class AppAccessibilityService : AccessibilityService() {
 
         if (targetPackage == packageName) return
 
-        CoroutineScope(Dispatchers.IO).launch {
+        serviceScope.launch {
             val db = AppDatabase.getDatabase(applicationContext)
-            val apps = db.selectedAppDao().getAllSelectedApps().first()
+
+            val apps = db.selectedAppDao()
+                .getAllSelectedApps()
+                .first()
 
             val selectedApp = apps.find {
                 it.packageName == targetPackage
@@ -34,7 +41,20 @@ class AppAccessibilityService : AccessibilityService() {
                 targetPackage
             )
 
-            if (usedMinutes < selectedApp.limitMinutes) return@launch
+            if (usedMinutes < selectedApp.limitMinutes) {
+                return@launch
+            }
+
+            val passedUsageMinutes =
+                getChallengePassedUsageMinutes(
+                    applicationContext,
+                    targetPackage
+                )
+
+            // Don't show another challenge at the same recorded usage minute.
+            if (usedMinutes <= passedUsageMinutes) {
+                return@launch
+            }
 
             setAppOverLimit(
                 applicationContext,
@@ -49,6 +69,7 @@ class AppAccessibilityService : AccessibilityService() {
                 ).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                             Intent.FLAG_ACTIVITY_SINGLE_TOP
+
                     putExtra("show_math_challenge", true)
                     putExtra("blocked_package", targetPackage)
                 }
@@ -59,5 +80,10 @@ class AppAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() = Unit
+
+    override fun onDestroy() {
+        serviceScope.cancel()
+        super.onDestroy()
+    }
 }
 
