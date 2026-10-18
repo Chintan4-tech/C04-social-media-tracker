@@ -11,13 +11,8 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-
 import androidx.compose.ui.unit.sp
-
 
 class MainActivity : ComponentActivity() {
 
@@ -87,6 +82,17 @@ class MainActivity : ComponentActivity() {
                             val targetPackage = blockedPackage
 
                             if (!targetPackage.isNullOrBlank()) {
+                                val usedMinutes = getTodayUsageMinutes(
+                                    this@MainActivity,
+                                    targetPackage
+                                )
+
+                                setChallengePassedAtUsage(
+                                    this@MainActivity,
+                                    targetPackage,
+                                    usedMinutes
+                                )
+
                                 setAppOverLimit(
                                     this@MainActivity,
                                     targetPackage,
@@ -163,9 +169,7 @@ fun SplashScreen() {
             androidx.compose.material3.Text(
                 text = "IDEAS I",
                 fontSize = 32.sp
-            
             )
         }
     }
 }
-
