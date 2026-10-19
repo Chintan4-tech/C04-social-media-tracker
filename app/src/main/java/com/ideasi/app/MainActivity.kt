@@ -47,6 +47,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 when (currentScreen) {
+
                     "splash" -> SplashScreen()
 
                     "selectApps" -> SelectAppsScreen(
@@ -57,7 +58,16 @@ class MainActivity : ComponentActivity() {
 
                     "setTime" -> SetTimeScreen(
                         onDone = {
+                            currentScreen = "disclosure"
+                        }
+                    )
+
+                    "disclosure" -> PermissionDisclosureScreen(
+                        onAgree = {
                             currentScreen = "permission"
+                        },
+                        onDecline = {
+                            currentScreen = "setTime"
                         }
                     )
 
@@ -106,7 +116,9 @@ class MainActivity : ComponentActivity() {
 
                             if (!targetPackage.isNullOrBlank()) {
                                 packageManager
-                                    .getLaunchIntentForPackage(targetPackage)
+                                    .getLaunchIntentForPackage(
+                                        targetPackage
+                                    )
                                     ?.let { targetIntent ->
                                         startActivity(targetIntent)
                                     }
@@ -125,12 +137,15 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleChallengeIntent(intent: Intent?) {
-        if (intent?.getBooleanExtra(
+        if (
+            intent?.getBooleanExtra(
                 "show_math_challenge",
                 false
             ) == true
         ) {
-            blockedPackage = intent.getStringExtra("blocked_package")
+            blockedPackage =
+                intent.getStringExtra("blocked_package")
+
             challengeRequested = true
         }
     }
