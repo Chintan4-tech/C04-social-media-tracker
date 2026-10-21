@@ -21,7 +21,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
-import androidx.compose.foundation.layout.padding
+
 import androidx.compose.ui.unit.dp
 
 private val SG_Navy = Color(0xFF061426)
