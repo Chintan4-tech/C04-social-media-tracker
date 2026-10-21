@@ -22,10 +22,7 @@ class MainActivity : ComponentActivity() {
     private var blockedPackage: String? = null
 
     private val preferences by lazy {
-        getSharedPreferences(
-            "ScrollGuardPrefs",
-            MODE_PRIVATE
-        )
+        getSharedPreferences("ScrollGuardPrefs", MODE_PRIVATE)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,10 +35,13 @@ class MainActivity : ComponentActivity() {
 
                 var currentScreen by remember {
                     mutableStateOf(
-                        if (challengeRequested) {
-                            "challenge"
-                        } else {
-                            "splash"
+                        when {
+                            challengeRequested -> "challenge"
+                            preferences.getBoolean(
+                                "setup_completed",
+                                false
+                            ) -> "dashboard"
+                            else -> "splash"
                         }
                     )
                 }
@@ -53,10 +53,18 @@ class MainActivity : ComponentActivity() {
                 }
 
                 LaunchedEffect(Unit) {
-                    kotlinx.coroutines.delay(1000)
+                    if (
+                        !challengeRequested &&
+                        !preferences.getBoolean(
+                            "setup_completed",
+                            false
+                        )
+                    ) {
+                        kotlinx.coroutines.delay(1500)
 
-                    if (!challengeRequested) {
-                        currentScreen = "selectApps"
+                        if (!challengeRequested) {
+                            currentScreen = "selectApps"
+                        }
                     }
                 }
 
@@ -115,6 +123,14 @@ class MainActivity : ComponentActivity() {
                         PermissionScreen(
                             onPermissionGranted = {
                                 scheduleUsageMonitoring()
+
+                                preferences.edit()
+                                    .putBoolean(
+                                        "setup_completed",
+                                        true
+                                    )
+                                    .apply()
+
                                 currentScreen = "dashboard"
                             }
                         )
@@ -222,16 +238,35 @@ fun IdeasITheme(content: @Composable () -> Unit) {
 @Composable
 fun SplashScreen() {
     androidx.compose.material3.Surface(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        color = androidx.compose.ui.graphics.Color(0xFF0A1929)
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            androidx.compose.material3.Text(
-                text = "IDEAS I",
-                fontSize = 32.sp
-            )
+            androidx.compose.foundation.layout.Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                androidx.compose.material3.Text(
+                    text = "ScrollGuard",
+                    color = androidx.compose.ui.graphics.Color(0xFF57D9A3),
+                    fontSize = 32.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+
+                androidx.compose.foundation.layout.Spacer(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(0.05f)
+                )
+
+                androidx.compose.material3.Text(
+                    text = "Take Control. Reclaim Your Time.",
+                    color = androidx.compose.ui.graphics.Color.White,
+                    fontSize = 16.sp
+                )
+            }
         }
     }
 }
