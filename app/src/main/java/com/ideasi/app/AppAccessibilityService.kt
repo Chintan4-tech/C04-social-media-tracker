@@ -1,12 +1,12 @@
 package com.ideasi.app
 
 import android.accessibilityservice.AccessibilityService
+import android.app.usage.UsageStatsManager
+import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.app.usage.UsageStatsManager
-import android.content.Context
 import android.view.accessibility.AccessibilityEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +45,8 @@ class AppAccessibilityService : AccessibilityService() {
                         checkMutex.withLock {
                             checkUsageLimit(target)
                         }
+                    } catch (_: Exception) {
+                        // Keep monitoring if a usage check fails.
                     } finally {
                         checking = false
                     }
@@ -57,6 +59,7 @@ class AppAccessibilityService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+
         mainHandler.removeCallbacks(checkRunnable)
         mainHandler.post(checkRunnable)
     }
@@ -64,7 +67,8 @@ class AppAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
 
-        if (event.eventType !=
+        if (
+            event.eventType !=
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
         ) return
 
@@ -80,8 +84,6 @@ class AppAccessibilityService : AccessibilityService() {
             foregroundStartTime = SystemClock.elapsedRealtime()
             foregroundStartUsageMillis = getUsageMillis(target)
 
-            // The user has returned to the selected app.
-            // Allow a new challenge if its limit is reached again.
             challengeLaunching = false
         }
     }
@@ -101,8 +103,6 @@ class AppAccessibilityService : AccessibilityService() {
 
         val currentUsageMillis = getUsageMillis(targetPackage)
 
-        // Add time elapsed since this app became foreground.
-        // This helps when Android's usage statistics update slowly.
         val elapsedMillis =
             (SystemClock.elapsedRealtime() - foregroundStartTime)
                 .coerceAtLeast(0L)
@@ -169,8 +169,10 @@ class AppAccessibilityService : AccessibilityService() {
                 this,
                 MainActivity::class.java
             ).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
 
                 putExtra("show_math_challenge", true)
                 putExtra("blocked_package", targetPackage)
@@ -178,7 +180,16 @@ class AppAccessibilityService : AccessibilityService() {
 
             try {
                 startActivity(intent)
-            } catch (e: Exception) {
+
+                // Permit another launch attempt if the selected app
+                // remains in the foreground after the challenge launch.
+                mainHandler.postDelayed({
+                    if (currentPackage == targetPackage) {
+                        challengeLaunching = false
+                    }
+                }, 2500)
+
+            } catch (_: Exception) {
                 challengeLaunching = false
             }
         }
