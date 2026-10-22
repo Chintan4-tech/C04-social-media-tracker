@@ -17,12 +17,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
-
-import androidx.compose.ui.unit.dp
 
 private val SG_Navy = Color(0xFF061426)
 private val SG_Green = Color(0xFF19D7A0)
@@ -61,14 +60,14 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                // A Math Challenge must take priority over navigation.
+                // A math challenge always takes priority.
                 LaunchedEffect(challengeRequested) {
                     if (challengeRequested) {
                         currentScreen = "challenge"
                     }
                 }
 
-                // First-launch flow only.
+                // First launch: Splash -> Select Apps.
                 LaunchedEffect(Unit) {
                     if (
                         !challengeRequested &&
@@ -94,51 +93,23 @@ class MainActivity : ComponentActivity() {
 
                     Scaffold(
                         containerColor = SG_Navy,
-
                         bottomBar = {
                             NavigationBar(
                                 containerColor = Color(0xFF10243B)
                             ) {
 
+                                // APPS TAB
                                 NavigationBarItem(
                                     selected = currentScreen == "apps",
-
                                     onClick = {
                                         currentScreen = "apps"
                                     },
-
                                     icon = {
                                         Text("📱")
                                     },
-
                                     label = {
                                         Text("Apps")
                                     },
-
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = SG_Yellow,
-                                        selectedTextColor = SG_Yellow,
-                                        unselectedIconColor = SG_Muted,
-                                        unselectedTextColor = SG_Muted,
-                                        indicatorColor = Color(0xFF253B51)
-                                    }
-                                )
-
-                                NavigationBarItem(
-                                    selected = currentScreen == "settings",
-
-                                    onClick = {
-                                        currentScreen = "settings"
-                                    },
-
-                                    icon = {
-                                        Text("⚙️")
-                                    },
-
-                                    label = {
-                                        Text("Settings")
-                                    },
-
                                     colors = NavigationBarItemDefaults.colors(
                                         selectedIconColor = SG_Yellow,
                                         selectedTextColor = SG_Yellow,
@@ -148,21 +119,39 @@ class MainActivity : ComponentActivity() {
                                     )
                                 )
 
+                                // SETTINGS TAB
+                                NavigationBarItem(
+                                    selected = currentScreen == "settings",
+                                    onClick = {
+                                        currentScreen = "settings"
+                                    },
+                                    icon = {
+                                        Text("⚙️")
+                                    },
+                                    label = {
+                                        Text("Settings")
+                                    },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = SG_Yellow,
+                                        selectedTextColor = SG_Yellow,
+                                        unselectedIconColor = SG_Muted,
+                                        unselectedTextColor = SG_Muted,
+                                        indicatorColor = Color(0xFF253B51)
+                                    )
+                                )
+
+                                // HOME TAB
                                 NavigationBarItem(
                                     selected = currentScreen == "dashboard",
-
                                     onClick = {
                                         currentScreen = "dashboard"
                                     },
-
                                     icon = {
                                         Text("🏠")
                                     },
-
                                     label = {
                                         Text("Home")
                                     },
-
                                     colors = NavigationBarItemDefaults.colors(
                                         selectedIconColor = SG_Yellow,
                                         selectedTextColor = SG_Yellow,
@@ -195,7 +184,7 @@ class MainActivity : ComponentActivity() {
                                 "settings" -> {
                                     SetTimeScreen(
                                         onDone = {
-                                            currentScreen = "settings"
+                                            currentScreen = "dashboard"
                                         }
                                     )
                                 }
@@ -213,7 +202,7 @@ class MainActivity : ComponentActivity() {
 
                 } else {
 
-                    // Setup and challenge screens do not show bottom navigation.
+                    // Setup and challenge screens have no bottom navigation.
                     when (currentScreen) {
 
                         "splash" -> {
@@ -237,12 +226,11 @@ class MainActivity : ComponentActivity() {
                                             false
                                         )
 
-                                    currentScreen =
-                                        if (hasAgreed) {
-                                            "permission"
-                                        } else {
-                                            "disclosure"
-                                        }
+                                    currentScreen = if (hasAgreed) {
+                                        "permission"
+                                    } else {
+                                        "disclosure"
+                                    }
                                 }
                             )
                         }
@@ -259,7 +247,6 @@ class MainActivity : ComponentActivity() {
 
                                     currentScreen = "permission"
                                 },
-
                                 onDecline = {
                                     currentScreen = "setTime"
                                 }
@@ -288,7 +275,6 @@ class MainActivity : ComponentActivity() {
                                 difficulty = getChallengeDifficulty(
                                     this@MainActivity
                                 ),
-
                                 onCorrectAnswer = {
                                     val targetPackage = blockedPackage
 
