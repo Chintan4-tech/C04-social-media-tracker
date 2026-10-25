@@ -367,9 +367,29 @@ class MainActivity : ComponentActivity() {
 fun IdeasITheme(
     content: @Composable () -> Unit
 ) {
-    MaterialTheme {
-        content()
-    }
+    val darkColors = androidx.compose.material3.darkColorScheme(
+        primary = Color(0xFF19D7A0),
+        onPrimary = Color(0xFF061426),
+
+        secondary = Color(0xFFFFD43B),
+        onSecondary = Color(0xFF061426),
+
+        background = Color(0xFF061426),
+        onBackground = Color(0xFFFFFFFF),
+
+        surface = Color(0xFF10243B),
+        onSurface = Color(0xFFFFFFFF),
+
+        surfaceVariant = Color(0xFF253B51),
+        onSurfaceVariant = Color(0xFFB8C7D9),
+
+        outline = Color(0xFF7890AA)
+    )
+
+    MaterialTheme(
+        colorScheme = darkColors,
+        content = content
+    )
 }
 
 @Composable
