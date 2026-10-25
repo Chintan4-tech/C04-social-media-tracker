@@ -22,6 +22,9 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 
 private val SG_Navy = Color(0xFF061426)
 private val SG_Green = Color(0xFF19D7A0)
@@ -368,39 +371,19 @@ fun IdeasITheme(
 
 @Composable
 fun SplashScreen() {
-    androidx.compose.material3.Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = SG_Navy
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(SG_Navy)
     ) {
-        androidx.compose.foundation.layout.Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            verticalArrangement =
-                androidx.compose.foundation.layout.Arrangement.Center,
-            horizontalAlignment =
-                androidx.compose.ui.Alignment.CenterHorizontally
-        ) {
-
-            Text(
-                text = "ScrollGuard",
-                color = SG_Green,
-                style = MaterialTheme.typography.headlineLarge
-            )
-
-            Text(
-                text = "Take Control. Reclaim Your Time.",
-                color = Color.White,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(top = 12.dp)
-            )
-
-            Text(
-                text = "Every focused minute is progress.",
-                color = SG_Muted,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-        }
+        Image(
+            painter = painterResource(
+                id = R.drawable.timeshield_splash
+            ),
+            contentDescription = "TimeShield splash screen",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
     }
+}
 }
