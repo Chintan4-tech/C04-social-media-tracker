@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.launch
 
@@ -46,7 +48,10 @@ val selectedPackages = savedApps
     .toSet()
 
 val filteredApps = apps.filter { app ->
-    app.appName.contains(searchQuery.trim(), ignoreCase = true)
+    app.appName.contains(
+        searchQuery.trim(),
+        ignoreCase = true
+    )
 }
 
 val textFieldColors = OutlinedTextFieldDefaults.colors(
@@ -63,159 +68,188 @@ val textFieldColors = OutlinedTextFieldDefaults.colors(
     cursorColor = AppsGreen
 )
 
-Column(
+Box(
     modifier = Modifier
         .fillMaxSize()
         .background(AppsNavy)
-        .padding(16.dp)
 ) {
+    // Large, subtle mathematical Pi watermark.
     Text(
-        text = "Choose Your Enemies",
-        style = MaterialTheme.typography.headlineSmall,
-        color = AppsWhite,
-        fontWeight = FontWeight.Bold
+        text = "π",
+        modifier = Modifier
+            .align(Alignment.Center)
+            .zIndex(0f),
+        fontSize = 280.sp,
+        fontWeight = FontWeight.Black,
+        color = AppsMuted.copy(alpha = 0.07f)
     )
 
-    Spacer(modifier = Modifier.height(12.dp))
-
-    OutlinedTextField(
-        value = searchQuery,
-        onValueChange = { searchQuery = it },
-        modifier = Modifier.fillMaxWidth(),
-        label = { Text("Search apps") },
-        placeholder = { Text("Instagram, YouTube...") },
-        singleLine = true,
-        shape = RoundedCornerShape(12.dp),
-        colors = textFieldColors
-    )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Text(
-        text = "${selectedPackages.size} apps selected",
-        style = MaterialTheme.typography.bodyMedium,
-        color = AppsMuted
-    )
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    LazyColumn(
-        modifier = Modifier.weight(1f)
+    // All screen content stays above the watermark.
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .zIndex(1f)
     ) {
-        items(
-            items = filteredApps,
-            key = { it.packageName }
-        ) { app ->
+        Text(
+            text = "Choose Your Enemies",
+            style = MaterialTheme.typography.headlineSmall,
+            color = AppsWhite,
+            fontWeight = FontWeight.Bold
+        )
 
-            val appIcon = remember(app.packageName) {
-                try {
-                    context.packageManager
-                        .getApplicationIcon(app.packageName)
-                        .toBitmap(width = 96, height = 96)
-                        .asImageBitmap()
-                } catch (e: Exception) {
-                    null
-                }
-            }
+        Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = selectedPackages.contains(app.packageName),
-                    onCheckedChange = { checked ->
-                        scope.launch {
-                            if (checked) {
-                                db.selectedAppDao().insertApp(
-                                    SelectedApp(
-                                        packageName = app.packageName,
-                                        appName = app.appName,
-                                        limitMinutes = 30
-                                    )
-                                )
-                            } else {
-                                db.selectedAppDao()
-                                    .deleteApp(app.packageName)
-                            }
-                        }
-                    },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = AppsGreen,
-                        uncheckedColor = AppsMuted,
-                        checkmarkColor = AppsNavy
-                    )
-                )
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Search apps") },
+            placeholder = { Text("Instagram, YouTube...") },
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            colors = textFieldColors
+        )
 
-                Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-                if (appIcon != null) {
-                    Image(
-                        bitmap = appIcon,
-                        contentDescription = "${app.appName} icon",
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                    )
-                } else {
-                    Surface(
-                        modifier = Modifier.size(44.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        color = AppsSurface
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = app.appName.take(1).uppercase(),
-                                color = AppsWhite,
-                                fontWeight = FontWeight.Bold
+        Text(
+            text = "${selectedPackages.size} apps selected",
+            style = MaterialTheme.typography.bodyMedium,
+            color = AppsMuted
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LazyColumn(
+            modifier = Modifier.weight(1f)
+        ) {
+            items(
+                items = filteredApps,
+                key = { it.packageName }
+            ) { app ->
+
+                val appIcon = remember(app.packageName) {
+                    try {
+                        context.packageManager
+                            .getApplicationIcon(app.packageName)
+                            .toBitmap(
+                                width = 96,
+                                height = 96
                             )
-                        }
+                            .asImageBitmap()
+                    } catch (e: Exception) {
+                        null
                     }
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = selectedPackages.contains(
+                            app.packageName
+                        ),
+                        onCheckedChange = { checked ->
+                            scope.launch {
+                                if (checked) {
+                                    db.selectedAppDao().insertApp(
+                                        SelectedApp(
+                                            packageName = app.packageName,
+                                            appName = app.appName,
+                                            limitMinutes = 30
+                                        )
+                                    )
+                                } else {
+                                    db.selectedAppDao()
+                                        .deleteApp(app.packageName)
+                                }
+                            }
+                        },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = AppsGreen,
+                            uncheckedColor = AppsMuted,
+                            checkmarkColor = AppsNavy
+                        )
+                    )
 
-                Text(
-                    text = app.appName,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = AppsWhite
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    if (appIcon != null) {
+                        Image(
+                            bitmap = appIcon,
+                            contentDescription = "${app.appName} icon",
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                        )
+                    } else {
+                        Surface(
+                            modifier = Modifier.size(44.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            color = AppsSurface
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = app.appName
+                                        .take(1)
+                                        .uppercase(),
+                                    color = AppsWhite,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Text(
+                        text = app.appName,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = AppsWhite
+                    )
+                }
+
+                HorizontalDivider(
+                    color = AppsBorder.copy(alpha = 0.55f)
                 )
             }
 
-            HorizontalDivider(color = AppsBorder.copy(alpha = 0.55f))
-        }
-
-        if (filteredApps.isEmpty()) {
-            item {
-                Text(
-                    text = "No matching apps found.",
-                    modifier = Modifier.padding(16.dp),
-                    color = AppsMuted
-                )
+            if (filteredApps.isEmpty()) {
+                item {
+                    Text(
+                        text = "No matching apps found.",
+                        modifier = Modifier.padding(16.dp),
+                        color = AppsMuted
+                    )
+                }
             }
         }
-    }
 
-    Button(
-        onClick = onNext,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp)
-            .height(56.dp),
-        shape = RoundedCornerShape(28.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = AppsGreen,
-            contentColor = AppsNavy
-        )
-    ) {
-        Text(
-            text = "Continue Battle ⚔️",
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleMedium
-        )
+        Button(
+            onClick = onNext,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp)
+                .height(56.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AppsGreen,
+                contentColor = AppsNavy
+            )
+        ) {
+            Text(
+                text = "Continue Battle ⚔️",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
     }
 }
 
