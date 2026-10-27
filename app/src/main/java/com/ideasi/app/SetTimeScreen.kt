@@ -1,5 +1,7 @@
+
 package com.ideasi.app
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,11 +11,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.launch
 
 private val BoundaryNavy = Color(0xFF061426)
@@ -26,7 +32,7 @@ private val BoundaryBorder = Color(0xFF7890AA)
 
 @Composable
 fun SetTimeScreen(onDone: () -> Unit) {
-val context = androidx.compose.ui.platform.LocalContext.current
+val context = LocalContext.current
 val db = remember { AppDatabase.getDatabase(context) }
 val scope = rememberCoroutineScope()
 
@@ -57,7 +63,7 @@ Box(
         .fillMaxSize()
         .background(BoundaryNavy)
 ) {
-    // Large mathematical symbol used as a subtle background watermark.
+    // Subtle mathematical watermark.
     Text(
         text = "π",
         modifier = Modifier
@@ -103,9 +109,25 @@ Box(
                     items = savedApps,
                     key = { it.packageName }
                 ) { app ->
+
                     val currentText =
                         textValues[app.packageName]
                             ?: app.limitMinutes.toString()
+
+                    // Load the real installed app icon.
+                    val appIcon = remember(app.packageName) {
+                        try {
+                            context.packageManager
+                                .getApplicationIcon(app.packageName)
+                                .toBitmap(
+                                    width = 96,
+                                    height = 96
+                                )
+                                .asImageBitmap()
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
 
                     Row(
                         modifier = Modifier
@@ -113,17 +135,56 @@ Box(
                             .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // App icon.
+                        if (appIcon != null) {
+                            Image(
+                                bitmap = appIcon,
+                                contentDescription = "${app.appName} icon",
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                            )
+                        } else {
+                            Surface(
+                                modifier = Modifier.size(44.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                color = BoundarySurface
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = app.appName
+                                            .take(1)
+                                            .uppercase(),
+                                        color = BoundaryWhite,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        // App name.
                         Text(
                             text = app.appName,
                             modifier = Modifier.weight(1f),
                             color = BoundaryWhite,
-                            style = MaterialTheme.typography.bodyLarge
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
                         )
 
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // Time-limit field.
                         OutlinedTextField(
                             value = currentText,
                             onValueChange = { input ->
-                                if (input.isEmpty() || input.all { it.isDigit() }) {
+                                if (
+                                    input.isEmpty() ||
+                                    input.all { it.isDigit() }
+                                ) {
                                     textValues[app.packageName] = input
                                 }
                             },
@@ -170,12 +231,16 @@ Box(
 
                             FilterChip(
                                 selected = selected,
-                                onClick = { difficulty = level },
+                                onClick = {
+                                    difficulty = level
+                                },
                                 label = {
                                     Text(
                                         text = level.name
                                             .lowercase()
-                                            .replaceFirstChar { it.uppercase() },
+                                            .replaceFirstChar {
+                                                it.uppercase()
+                                            },
                                         fontWeight = FontWeight.Bold
                                     )
                                 },
@@ -206,6 +271,7 @@ Box(
                 scope.launch {
                     savedApps.forEach { app ->
                         val enteredText = textValues[app.packageName]
+
                         val minutes = if (enteredText == null) {
                             app.limitMinutes
                         } else {
