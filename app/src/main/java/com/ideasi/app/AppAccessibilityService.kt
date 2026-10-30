@@ -1,3 +1,4 @@
+
 package com.ideasi.app
 
 import android.accessibilityservice.AccessibilityService
@@ -20,14 +21,26 @@ import java.util.Calendar
 
 class AppAccessibilityService : AccessibilityService() {
 
+    companion object {
+        private const val CHECK_INTERVAL_MS = 1_000L
+        private const val CHALLENGE_COOLDOWN_MS = 3 * 60 * 1_000L
+        private const val PREFS_NAME = "ScrollGuardPrefs"
+        private const val COOLDOWN_KEY_PREFIX = "challenge_cooldown_until_"
+    }
+
     private val serviceScope =
         CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private val checkMutex = Mutex()
 
+    @Volatile
     private var currentPackage: String? = null
+
+    @Volatile
     private var challengeLaunching = false
+
+    @Volatile
     private var checking = false
 
     private var foregroundStartTime = 0L
@@ -37,7 +50,12 @@ class AppAccessibilityService : AccessibilityService() {
         override fun run() {
             val target = currentPackage
 
-            if (target != null && !challengeLaunching && !checking) {
+            if (
+                target != null &&
+                target != packageName &&
+                !challengeLaunching &&
+                !checking
+            ) {
                 checking = true
 
                 serviceScope.launch {
@@ -53,7 +71,7 @@ class AppAccessibilityService : AccessibilityService() {
                 }
             }
 
-            mainHandler.postDelayed(this, 1000)
+            mainHandler.postDelayed(this, CHECK_INTERVAL_MS)
         }
     }
 
@@ -84,11 +102,14 @@ class AppAccessibilityService : AccessibilityService() {
             foregroundStartTime = SystemClock.elapsedRealtime()
             foregroundStartUsageMillis = getUsageMillis(target)
 
-            challengeLaunching = false
+            // Do not clear challengeLaunching here.
+            // The launch guard is cleared only when it is safe to retry.
         }
     }
 
     private suspend fun checkUsageLimit(targetPackage: String) {
+        if (currentPackage != targetPackage) return
+
         val db = AppDatabase.getDatabase(applicationContext)
 
         val apps = db.selectedAppDao()
@@ -101,6 +122,9 @@ class AppAccessibilityService : AccessibilityService() {
             it.packageName == targetPackage
         } ?: return
 
+        val limitMillis =
+            selectedApp.limitMinutes.coerceAtLeast(1) * 60_000L
+
         val currentUsageMillis = getUsageMillis(targetPackage)
 
         val elapsedMillis =
@@ -112,11 +136,12 @@ class AppAccessibilityService : AccessibilityService() {
             foregroundStartUsageMillis + elapsedMillis
         )
 
-        val limitMillis = selectedApp.limitMinutes * 60_000L
+        if (estimatedUsageMillis < limitMillis) {
+            return
+        }
 
-        if (estimatedUsageMillis < limitMillis) return
-
-        val usedMinutes = (estimatedUsageMillis / 60_000L).toInt()
+        val usedMinutes =
+            (estimatedUsageMillis / 60_000L).toInt()
 
         val passedUsageMinutes =
             getChallengePassedUsageMinutes(
@@ -124,9 +149,21 @@ class AppAccessibilityService : AccessibilityService() {
                 targetPackage
             )
 
-        if (usedMinutes <= passedUsageMinutes) return
+        // A correct answer records the usage level at which the
+        // challenge was passed. Do not challenge again at that same level.
+        if (usedMinutes <= passedUsageMinutes) {
+            return
+        }
+
+        // Wait until the three-minute cooldown expires.
+        if (isInChallengeCooldown(targetPackage)) {
+            return
+        }
 
         if (currentPackage != targetPackage) return
+
+        // Prevent simultaneous checks from launching duplicate screens.
+        if (challengeLaunching) return
 
         challengeLaunching = true
 
@@ -137,6 +174,22 @@ class AppAccessibilityService : AccessibilityService() {
         )
 
         launchChallenge(targetPackage)
+    }
+
+    private fun isInChallengeCooldown(
+        targetPackage: String
+    ): Boolean {
+        val prefs = getSharedPreferences(
+            PREFS_NAME,
+            Context.MODE_PRIVATE
+        )
+
+        val cooldownUntil = prefs.getLong(
+            COOLDOWN_KEY_PREFIX + targetPackage,
+            0L
+        )
+
+        return System.currentTimeMillis() < cooldownUntil
     }
 
     private fun getUsageMillis(targetPackage: String): Long {
@@ -157,14 +210,19 @@ class AppAccessibilityService : AccessibilityService() {
             System.currentTimeMillis()
         )
 
+        // Sum matching entries instead of relying on the first result.
         return stats
-            .firstOrNull { it.packageName == targetPackage }
-            ?.totalTimeInForeground
-            ?: 0L
+            .filter { it.packageName == targetPackage }
+            .sumOf { it.totalTimeInForeground }
     }
 
     private fun launchChallenge(targetPackage: String) {
         mainHandler.post {
+            if (currentPackage != targetPackage) {
+                challengeLaunching = false
+                return@post
+            }
+
             val intent = Intent(
                 this,
                 MainActivity::class.java
@@ -181,18 +239,25 @@ class AppAccessibilityService : AccessibilityService() {
             try {
                 startActivity(intent)
 
-                // Permit another launch attempt if the selected app
-                // remains in the foreground after the challenge launch.
+                // Release the launch guard if the challenge did not
+                // actually take over the foreground.
                 mainHandler.postDelayed({
-                    if (currentPackage == targetPackage) {
+                    if (
+                        currentPackage == targetPackage &&
+                        !isMainActivityInForeground()
+                    ) {
                         challengeLaunching = false
                     }
-                }, 2500)
+                }, 2_500L)
 
             } catch (_: Exception) {
                 challengeLaunching = false
             }
         }
+    }
+
+    private fun isMainActivityInForeground(): Boolean {
+        return currentPackage == packageName
     }
 
     override fun onInterrupt() = Unit
