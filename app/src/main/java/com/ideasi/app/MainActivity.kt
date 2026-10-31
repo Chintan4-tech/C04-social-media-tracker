@@ -298,6 +298,16 @@ class MainActivity : ComponentActivity() {
                                             targetPackage,
                                             usedMinutes
                                         )
+                                        // Start a three-minute cooldown after solving the challenge.
+getSharedPreferences(
+    "ScrollGuardPrefs",
+    MODE_PRIVATE
+).edit()
+    .putLong(
+        "challenge_cooldown_until_" + targetPackage,
+        System.currentTimeMillis() + 3 * 60 * 1000L
+    )
+    .apply()
 
                                         setAppOverLimit(
                                             this@MainActivity,
