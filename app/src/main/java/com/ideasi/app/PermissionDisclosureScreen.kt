@@ -28,7 +28,7 @@ fun PermissionDisclosureScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "How Ideas I Uses Permissions",
+            text = "How TimeShield Uses Permissions",
             style = MaterialTheme.typography.headlineSmall
         )
 
@@ -36,7 +36,7 @@ fun PermissionDisclosureScreen(
 
         Text(
             text = "Usage Access\n" +
-                "Ideas I uses usage information to calculate " +
+                "TimeShield uses usage information to calculate " +
                 "how long you spend in the apps you select."
         )
 
@@ -44,7 +44,7 @@ fun PermissionDisclosureScreen(
 
         Text(
             text = "Accessibility Permission\n" +
-                "Ideas I uses Accessibility to detect when " +
+                "TimeShield uses Accessibility to detect when " +
                 "you open selected apps and attempt to show " +
                 "a Math Challenge when you reach your time limit. " +
                 "This feature may not work on every device."
@@ -53,7 +53,7 @@ fun PermissionDisclosureScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Ideas I is designed to use these permissions " +
+            text = "TimeShield is designed to use these permissions " +
                 "for its app-usage and time-limit features. " +
                 "Please review the app's privacy policy to " +
                 "understand how your information is handled."
