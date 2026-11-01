@@ -86,7 +86,7 @@ fun PermissionScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            "Set Up Ideas I",
+            "Set Up TimeShield",
             style = MaterialTheme.typography.titleLarge
         )
 
@@ -147,7 +147,7 @@ fun PermissionScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            "After enabling each permission in Android Settings, return here. Ideas I will check automatically.",
+            "After enabling each permission in Android Settings, return here. TimeShield will check automatically.",
             style = MaterialTheme.typography.bodySmall
         )
     }
