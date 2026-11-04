@@ -27,6 +27,10 @@ import androidx.work.WorkManager
 import kotlinx.coroutines.delay
 import java.util.concurrent.TimeUnit
 import com.google.android.gms.ads.MobileAds
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.weight
+import com.google.android.gms.ads.MobileAds
 
 private val SG_Navy = Color(0xFF061426)
 private val SG_Green = Color(0xFF19D7A0)
