@@ -26,6 +26,9 @@ xmlns:tools="http://schemas.android.com/tools">
     android:icon="@drawable/timeshield_icon"
     android:label="TimeShield"
     android:theme="@android:style/Theme.Material.Light.NoActionBar">
+    <meta-data
+    android:name="com.google.android.gms.ads.APPLICATION_ID"
+    android:value="ca-app-pub-8659591552192552~2053621060" />
 
     <activity
         android:name=".MainActivity"
