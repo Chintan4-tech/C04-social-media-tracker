@@ -20,11 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.drawable.toBitmap
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
 import kotlinx.coroutines.delay
 
 // ============================================================
@@ -758,10 +754,11 @@ private fun formatMinutes(
 // GOOGLE ADMOB BANNER
 // ============================================================
 
-@Composable
-fun BannerAdView(
-    modifier: Modifier = Modifier
-) {
+BannerAdView(
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(50.dp)
+){
     val context = LocalContext.current
 
     val adView = remember {
