@@ -750,37 +750,4 @@ private fun formatMinutes(
     }
 }
 
-// ============================================================
-// GOOGLE ADMOB BANNER
-// ============================================================
 
-BannerAdView(
-    modifier = Modifier
-        .fillMaxWidth()
-        .height(50.dp)
-){
-    val context = LocalContext.current
-
-    val adView = remember {
-        AdView(context).apply {
-            adUnitId = "ca-app-pub-3940256099942544/9214589741"
-            setAdSize(AdSize.BANNER)
-            loadAd(
-                AdRequest.Builder().build()
-            )
-        }
-    }
-
-    DisposableEffect(adView) {
-        onDispose {
-            adView.destroy()
-        }
-    }
-
-    AndroidView(
-        modifier = modifier,
-        factory = {
-            adView
-        }
-    )
-}
