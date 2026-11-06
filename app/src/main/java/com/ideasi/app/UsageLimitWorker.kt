@@ -1,3 +1,4 @@
+
 package com.ideasi.app
 
 import android.content.Context
@@ -12,28 +13,40 @@ class UsageLimitWorker(
 
     override suspend fun doWork(): Result {
 
-        val db = AppDatabase.getDatabase(applicationContext)
+        return try {
+            val db = AppDatabase.getDatabase(applicationContext)
 
-        val apps = db.selectedAppDao()
-            .getAllSelectedApps()
-            .first()
+            val apps = db.selectedAppDao()
+                .getAllSelectedApps()
+                .first()
 
-        for (app in apps) {
+            for (app in apps) {
 
-            val usedMinutes = getTodayUsageMinutes(
-                applicationContext,
-                app.packageName
-            )
+                val usedMinutes = getTodayUsageMinutes(
+                    applicationContext,
+                    app.packageName
+                )
 
-            val overLimit = usedMinutes >= app.limitMinutes
+                // Include the rewarded-ad extension, if earned.
+                val effectiveLimit = getEffectiveLimitMinutes(
+                    applicationContext,
+                    app.packageName,
+                    app.limitMinutes.coerceAtLeast(1)
+                )
 
-            setAppOverLimit(
-                applicationContext,
-                app.packageName,
-                overLimit
-            )
+                val overLimit = usedMinutes >= effectiveLimit
+
+                setAppOverLimit(
+                    applicationContext,
+                    app.packageName,
+                    overLimit
+                )
+            }
+
+            Result.success()
+
+        } catch (exception: Exception) {
+            Result.retry()
         }
-
-        return Result.success()
     }
 }
