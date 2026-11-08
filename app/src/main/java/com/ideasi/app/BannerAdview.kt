@@ -10,8 +10,8 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 
-private const val TEST_BANNER_AD_UNIT_ID =
-    "ca-app-pub-3940256099942544/9214589741"
+private const val BANNER_AD_UNIT_ID =
+    "ca-app-pub-8659591552192552/5913362062"
 
 @Composable
 fun BannerAdView(
@@ -21,7 +21,7 @@ fun BannerAdView(
 
     val adView = remember {
         AdView(context).apply {
-            adUnitId = TEST_BANNER_AD_UNIT_ID
+            adUnitId = BANNER_AD_UNIT_ID
             setAdSize(AdSize.BANNER)
             loadAd(AdRequest.Builder().build())
         }
@@ -38,3 +38,4 @@ fun BannerAdView(
         factory = { adView }
     )
 }
+
